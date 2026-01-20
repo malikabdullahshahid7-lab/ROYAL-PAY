@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>RoyalPay | Admin & User Logs</title>
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        /* --- 1. ROYAL GOLD THEME VARIABLES --- */
+        :root {
+            --bg-body: #050505;
+            --bg-card: #121212;
+            --bg-input: #1E1E1E;
+            
+            --primary: #D4AF37;           /* Metallic Gold */
+            --primary-light: #FFD700;     /* Bright Gold */
+            --primary-dark: #aa8c2c;
+            
+            --text-main: #ffffff;
+            --text-muted: #888888;
+            --border-color: #333333;
+            
+            --gold-gradient: linear-gradient(135deg, #D4AF37 0%, #FFD700 100%);
+            --dark-gradient: linear-gradient(to bottom, #1a1a1a, #000000);
+
+            --radius: 12px;
+            --transition: 0.3s ease;
+        }
+
+        /* --- 2. RESET & BASE --- */
+        * { box-sizing: border-box; margin: 0; padding: 0; outline: none; -webkit-tap-highlight-color: transparent; }
+        
+        body {
+            font-family: 'Cinzel', 'Times New Roman', serif;
+            background: var(--bg-body);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            background-image: var(--dark-gradient);
+        }
+
+        .ui-font { font-family: 'Inter', sans-serif; }
+        a { text-decoration: none; color: inherit; }
+        ul { list-style: none; }
+
+        /* --- 3. LAYOUT --- */
+        .app-container { display: flex; width: 100%; height: 100vh; overflow: hidden; }
+
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background-color: #000;
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 30px 20px;
+            z-index: 50;
+        }
+
+        .logo {
+            font-family: 'Cinzel', serif;
+            font-size:1.8rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 60px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+        }
+
+        .nav-menu { display: flex; flex-direction: column; gap: 15px; }
+
+        .nav-link {
+            padding: 15px 20px;
+            border-radius: var(--radius);
+            color: var(--text-muted);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: var(--transition);
+            font-family: 'Inter', sans-serif;
+            letter-spacing: 1px;
+            border: 1px solid transparent;
+        }
+
+        .nav-link:hover { color: var(--primary); background: rgba(212, 175, 55, 0.05); }
+        
+        .nav-link.active {
+            background: var(--gold-gradient);
+            color: #000000;
+            font-weight: 600;
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
+            border-color: var(--primary);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            padding-bottom: 100px; 
+            position: relative;
+        }
+
+        .mobile-header {
+            display: none;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 15px;
+        }
+
+        /* --- 4. TABS SYSTEM --- */
+        .tab-section { display: none; animation: fadeIn 0.5s ease; }
+        .tab-section.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ---5. UI COMPONENTS --- */
+        .card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 25px;
+            margin-bottom: 25px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 2px;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
+            opacity: 0.5;
+        }
+
+        .card-header { margin-bottom: 20px; border-bottom: 1px solid #222; padding-bottom: 15px; }
+        
+        .card-title {
+            font-family: 'Cinzel', serif;
+            font-size: 1.3rem;
+            color: var(--primary);
+            letter-spacing: 1px;
+        }
+
+        /* Balance Display */
+        .balance-display {
+            text-align: center;
+            padding: 30px;
+            background: linear-gradient(145deg, #1a1a1a, #000);
+            border: 2px solid var(--primary);
+            border-radius: var(--radius);
+            margin-bottom: 25px;
+            box-shadow: 0 0 20px rgba(212, 175, 55, 0.1);
+        }
+        .balance-label { color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; font-size: 0.9rem; }
+        .balance-amount { font-size: 3rem; font-weight: 800; color: var(--primary-light); margin: 10px 0; text-shadow: 0 0 15px rgba(255, 215, 0, 0.2); }
+
+        /* Dashboard Grid */
+        .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; }
+        
+        .action-card {
+            background: #0f0f0f;
+            border: 1px solid var(--primary-dark);
+            border-radius: var(--radius);
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .action-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(212, 175, 55, 0.15);
+        }
+
+        .action-icon { font-size: 2rem; color: var(--primary); margin-bottom: 10px; }
+        .action-val { font-size: 1.5rem; font-weight: 700; margin: 5px 0; color: #fff; }
+        .action-lbl { font-family: 'Inter', sans-serif; color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 2px; }
+
+        /* User Login Table (Admin Only) */
+        .user-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+            margin-top: 15px;
+        }
+        .user-table th {
+            text-align: left;
+            color: var(--text-muted);
+            padding: 10px;
+            border-bottom: 1px solid #333;
+        }
+        .user-table td {
+            padding: 12px 10px;
+            border-bottom: 1px solid #222;
+            color: #fff;
+        }
+        .status-active { color: #10b981; font-size: 0.8rem; padding: 2px 6px; background: rgba(16, 185, 129, 0.1); border-radius: 4px; }
+
+        /* Ads Display */
+        .ad-banner-container { display: flex; flex-direction: column; gap: 15px; }
+        .ad-banner {
+            background: linear-gradient(90deg, #222, #111);
+            border-left: 4px solid var(--primary);
+            padding: 15px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .ad-banner-content h4 { color: #fff; margin-bottom: 3px; }
+        .ad-banner-content span { color: var(--primary); font-weight: 700; }
+        .btn-ad-claim { padding: 6px 15px; font-size: 0.8rem; border-radius: 6px; background: var(--primary); color: #000; border: none; font-weight: bold; cursor: pointer; }
+
+        /* Forms & Inputs */
+        .form-group { margin-bottom: 20px; }
+        .form-label { display: block; margin-bottom: 10px; font-size: 0.9rem; color: var(--primary); font-family: 'Inter', sans-serif; }
+        
+        .form-control, .form-select {
+            width: 100%;
+            background-color: var(--bg-input);
+            border: 1px solid #333;
+            color: #fff;
+            padding: 14px;
+            border-radius: var(--radius);
+            font-size: 1.1rem;
+            font-family: 'Inter', sans-serif;
+            transition: var(--transition);
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 10px rgba(212, 175, 55, 0.2);
+        }
+
+        /* Buttons */
+        .btn {
+            width: 100%;
+            padding: 16px;
+            border-radius: var(--radius);
+            border: none;
+            font-weight: 700;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            font-family: 'Cinzel', serif;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .btn-gold { 
+            background: var(--gold-gradient); 
+            color: #000000; 
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
+        }
+        .btn-gold:hover { transform: translateY(-2px); }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+        }
+        .btn-outline:hover { background: rgba(212,175,55,0.1); }
+
+        .btn-danger {
+            background: #ef4444; color: white;
+        }
+
+        /* Payment Method Cards */
+        .method-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .method-option { position: relative; cursor: pointer; }
+        .method-option input { position: absolute; opacity: 0; width: 0; height: 0; }
+        .method-card {
+            background: #151515;
+            border: 1px solid #333;
+            border-radius: var(--radius);
+            padding: 20px;
+            text-align: center;
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+        .method-option input:checked + .method-card {
+            border-color: var(--primary);
+            background: rgba(212, 175, 55, 0.1);
+            box-shadow: 0 0 10px rgba(212, 175, 55, 0.2);
+        }
+        .method-icon { font-size: 1.8rem; margin-bottom: 5px; }
+        .text-easypaisa { color: #00a651; }
+        .text-jazzcash { color: #d32f2f; }
+
+        /* Admin Panel Styles */
+        .admin-badge {
+            background: #ef4444; color: white; padding: 5px 10px; 
+            border-radius: 4px; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px;
+            display: inline-block; margin-bottom: 10px;
+        }
+
+        /* File Upload */
+        .file-upload-wrapper {
+            position: relative;
+            width: 100%;
+            height: 150px;
+            border: 2px dashed #444;
+            border-radius: var(--radius);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: var(--transition);
+            background: rgba(255,255,255,0.02);
+        }
+        .file-upload-wrapper:hover { border-color: var(--primary); background: rgba(212, 175, 55, 0.05); }
+        .file-upload-wrapper i { font-size: 2rem; margin-bottom: 10px; color: var(--primary); }
+        .file-upload-wrapper input[type="file"] {
+            position: absolute; width: 100%; height: 100%; opacity: 0; cursor: pointer;
+        }
+
+        /* AD MODAL */
+        .ad-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 9999;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .ad-box {
+            background: #000;
+            border: 2px solid var(--primary);
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+            box-shadow: 0 0 30px rgba(212, 175, 55, 0.3);
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes popIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        .ad-title { font-size: 1.5rem; color: var(--primary); margin-bottom: 10px; }
+        .ad-desc { color: var(--text-muted); margin-bottom: 20px; }
+
+        /* --- 6. MOBILE BOTTOM NAV --- */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0; left: 0; width: 100%;
+            background-color: #000;
+            border-top: 1px solid var(--primary-dark);
+            display: flex;
+            justify-content: space-around;
+            padding: 15px 0;
+            z-index: 100;
+        }
+
+        .nav-item-mobile {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            gap: 5px;
+            cursor: pointer;
+            font-family: 'Cinzel', serif;
+        }
+
+        .nav-item-mobile i { font-size: 1.2rem; color: var(--text-muted); transition: var(--transition); }
+        .nav-item-mobile.active { color: var(--primary); }
+        .nav-item-mobile.active i { color: var(--primary); text-shadow: 0 0 10px var(--primary); }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            .mobile-header { display: flex; }
+            .main-content { padding: 15px; padding-bottom: 90px; }
+            .action-grid { grid-template-columns: 1fr; }
+            .method-grid { grid-template-columns: 1fr 1fr; }
+        }
+        @media (min-width: 769px) { .bottom-nav { display: none; } }
+    </style>
+</head>
+<body>
+
+    <!-- AD OVERLAY -->
+    <div id="ad-overlay" class="ad-overlay">
+        <div class="ad-box">
+            <i class="fa-solid fa-crown" style="font-size: 3rem; color: var(--primary); margin-bottom: 15px;"></i>
+            <h2 id="active-ad-title" class="ad-title" style="font-family: 'Cinzel', serif;">SPONSOR AD</h2>
+            <p id="active-ad-desc" class="ad-desc">Watching this ad will reward you!</p>
+            <div class="ad-actions" style="display:flex; gap:10px;">
+                <button class="btn btn-outline" onclick="closeAd()">Skip</button>
+                <button class="btn btn-gold" onclick="watchAd()">Watch Now</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="app-container">
+        
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <div class="logo">
+                <i class="fa-solid fa-crown"></i> ROYAL PAY
+            </div>
+            <nav class="nav-menu">
+                <div class="nav-link active" onclick="switchTab('dashboard', this)">
+                    <i class="fa-solid fa-layer-group"></i> <span>Dashboard</span>
+                </div>
+                <div class="nav-link" onclick="switchTab('deposit', this)">
+                    <i class="fa-solid fa-circle-arrow-down"></i> <span>Deposit</span>
+                </div>
+                <div class="nav-link" onclick="switchTab('withdraw', this)">
+                    <i class="fa-solid fa-money-bill-wave"></i> <span>Withdraw</span>
+                </div>
+                <div class="nav-link" onclick="switchTab('tasks', this)">
+                    <i class="fa-solid fa-list-check"></i> <span>Tasks</span>
+                </div>
+                <div class="nav-link" onclick="switchTab('settings', this)">
+                    <i class="fa-solid fa-sliders"></i> <span>Settings</span>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content ui-font">
+            
+            <!-- Mobile Header -->
+            <header class="mobile-header">
+                <div class="logo" style="margin:0; font-size: 1.4rem;">
+                    <i class="fa-solid fa-crown"></i> ROYAL
+                </div>
+                <div style="width: 35px; height: 35px; border: 1px solid var(--primary); border-radius: 50%; overflow: hidden;">
+                    <img src="https://picsum.photos/seed/royal/100/100" alt="User" style="width: 100%; height: 100%;">
+                </div>
+            </header>
+
+            <!-- TAB 1: DASHBOARD -->
+            <section id="dashboard" class="tab-section active">
+                <!-- Full Balance Display -->
+                <div class="balance-display">
+                    <div class="balance-label">Total Collected Balance</div>
+                    <div class="balance-amount" id="display-balance">0 PKR</div>
+                </div>
+
+                <!-- Simulation Button -->
+                <div style="text-align:center; margin-bottom: 25px;">
+                    <button class="btn btn-outline" style="width:auto; display:inline-flex; padding: 10px 20px;" onclick="simulateUserLogin()">
+                        <i class="fa-solid fa-user-plus"></i> Simulate New User Login
+                    </button>
+                    <p style="color:var(--text-muted); font-size:0.8rem; margin-top:10px;">
+                        (Use this to add names to the Admin List)
+                    </p>
+                </div>
+
+                <!-- Ads Section -->
+                <div class="card">
+                    <div class="card-header" style="border:none; padding-bottom:0;">
+                        <div class="card-title" style="font-size:1.1rem;">Earn More</div>
+                    </div>
+                    <div id="ads-container" class="ad-banner-container"></div>
+                </div>
+
+                <div class="action-grid">
+                    <div class="action-card" onclick="switchTab('deposit', null)">
+                        <div class="action-icon"><i class="fa-solid fa-sack-dollar"></i></div>
+                        <div class="action-val">Deposit Profit</div>
+                        <div class="action-lbl">Add Funds</div>
+                    </div>
+
+                    <div class="action-card" onclick="switchTab('withdraw', null)">
+                        <div class="action-icon"><i class="fa-solid fa-circle-arrow-up"></i></div>
+                        <div class="action-val">Withdraw</div>
+                        <div class="action-lbl">Cash Out</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 2: DEPOSIT (Range 200-5000) -->
+            <section id="deposit" class="tab-section">
+                <h2 style="font-family: 'Cinzel', serif; color: #fff; margin-bottom: 25px; border-bottom: 1px solid var(--primary); display: inline-block; padding-bottom: 5px;">Deposit Funds</h2>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Step 1: Send Money</div>
+                    </div>
+                    <p style="color: var(--text-muted); margin-bottom: 20px;">Send between <strong>200 PKR - 5000 PKR</strong> to Saima.</p>
+                    
+                    <div style="background: #1a1a1a; padding: 20px; border-radius: var(--radius); border: 1px solid #444; text-align: center; margin-bottom: 20px;">
+                        <div style="color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; margin-bottom: 5px;">Account Name</div>
+                        <div style="font-size: 1.2rem; color: #fff; font-weight: 700; margin-bottom: 10px;">Saima</div>
+                        <div style="width: 100%; height: 1px; background: #333; margin-bottom: 10px;"></div>
+                        <div style="color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; margin-bottom: 5px;">Account Number</div>
+                        <div style="font-size: 1.5rem; color: var(--primary); font-weight: 800; letter-spacing: 1px;">0302-6690122</div>
+                    </div>
+
+                    <div class="method-grid">
+                        <label class="method-option">
+                            <input type="radio" name="pay_method" value="easypaisa" checked onchange="updateMethodDisplay()">
+                            <div class="method-card">
+                                <i class="fa-solid fa-mobile-screen-button method-icon text-easypaisa"></i>
+                                <span class="text-easypaisa">Easypaisa</span>
+                            </div>
+                        </label>
+
+                        <label class="method-option">
+                            <input type="radio" name="pay_method" value="jazzcash" onchange="updateMethodDisplay()">
+                            <div class="method-card">
+                                <i class="fa-solid fa-mobile-screen-button method-icon text-jazzcash"></i>
+                                <span class="text-jazzcash">JazzCash</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Step 2: Verify Payment</div>
+                    </div>
+                    
+                    <form onsubmit="handleDeposit(event)">
+                        <div class="form-group">
+                            <label class="form-label">Amount Sent (Range: 200 - 5000)</label>
+                            <input type="number" id="d-amount" class="form-control" placeholder="Enter amount" min="200" max="5000" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Upload Screenshot</label>
+                            <div class="file-upload-wrapper">
+                                <input type="file" accept="image/*" required id="deposit-screenshot" onchange="updateFileName(this)">
+                                <i class="fa-solid fa-cloud-arrow-up"></i>
+                                <span id="file-name-display">Tap to upload screenshot</span>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-gold">
+                            <i class="fa-solid fa-check-double"></i> Verify & Add Funds
+                        </button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- TAB 3: WITHDRAW FUNDS (Range 500-5000) -->
+            <section id="withdraw" class="tab-section">
+                <h2 style="font-family: 'Cinzel', serif; color: #fff; margin-bottom: 25px; border-bottom: 1px solid var(--primary); display: inline-block; padding-bottom: 5px;">Withdraw Funds</h2>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Payment Method</div>
+                    </div>
+                    
+                    <div style="padding: 20px; border: 1px solid var(--primary); background: rgba(212, 175, 55, 0.1); border-radius: var(--radius); display: flex; align-items: center; gap: 15px;">
+                        <i class="fa-solid fa-wallet" style="font-size: 1.5rem; color: var(--primary);"></i>
+                        <div>
+                            <div style="color: #fff; font-weight: 700;">Current Balance</div>
+                            <div style="color: var(--text-muted); font-size: 0.8rem;">Withdraw via Easypaisa</div>
+                        </div>
+                    </div>
+
+                    <form style="margin-top: 30px;" onsubmit="handleWithdraw(event)">
+                        <div class="form-group">
+                            <label class="form-label">Amount (PKR) <small style="color:var(--text-muted); font-weight:normal;">(Min: 500, Max: 5000)</small></label>
+                            <div style="position: relative;">
+                                <span style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--primary); font-family: 'Cinzel', serif;">Rs.</span>
+                                <input type="number" id="w-amount" class="form-control" placeholder="Enter amount" min="500" max="5000" style="padding-left: 50px; border: 1px solid var(--primary);" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Account Number</label>
+                            <input type="tel" class="form-control" placeholder="03XX-XXXXXXX" required>
+                        </div>
+
+                        <button type="submit" class="btn btn-gold">
+                            Confirm Withdrawal
+                        </button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- TAB 4: TASKS -->
+            <section id="tasks" class="tab-section">
+                <h2 style="font-family: 'Cinzel', serif; color: #fff; margin-bottom: 25px; border-bottom: 1px solid var(--primary); display: inline-block; padding-bottom: 5px;">Daily Tasks</h2>
+                <div class="card">
+                    <div style="padding:15px; border:1px solid #333; border-radius:8px; display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                        <div>
+                            <h4 style="color:#fff;">Login to WhatsApp</h4>
+                            <div style="color:var(--primary); font-size:0.9rem; font-weight:700;">Reward: 50 PKR</div>
+                        </div>
+                        <button class="btn btn-gold" style="width:auto; padding:8px 20px;" onclick="addBalance(50)">Start</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 5: SETTINGS & ADMIN PANEL -->
+            <section id="settings" class="tab-section">
+                <h2 style="font-family: 'Cinzel', serif; color: #fff; margin-bottom: 25px; border-bottom: 1px solid var(--primary); display: inline-block; padding-bottom: 5px;">Settings</h2>
+                
+                <!-- User Settings -->
+                <div class="card">
+                    <div class="form-group">
+                        <label class="form-label">Currency Display</label>
+                        <select class="form-select" style="border-color: #333;">
+                            <option>PKR (Pakistani Rupee)</option>
+                            <option>USD (US Dollar)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- ADMIN LOGIN BUTTON -->
+                <div class="card" style="border: 1px dashed var(--primary); background: rgba(212,175,55,0.05);">
+                    <div class="card-header" style="padding-bottom:0; margin-bottom:15px;">
+                        <div class="card-title" style="font-size:1rem;">Owner Access</div>
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:10px;">
+                        <!-- Username Input Hidden -->
+                        <input type="text" id="admin-user-input" class="form-control" placeholder="Username (admin)" style="display:none;">
+                        <!-- Password Input Hidden -->
+                        <input type="password" id="admin-pass-input" class="form-control" placeholder="Password (1234)" style="display:none;">
+                        <button class="btn btn-outline" onclick="handleAdminLogin()">Admin Login</button>
+                    </div>
+                </div>
+
+                <!-- HIDDEN ADMIN PANEL -->
+                <div id="admin-panel" class="card" style="display:none; border: 2px solid #ef4444;">
+                    <span class="admin-badge">ADMIN MODE</span>
+                    <div class="card-header" style="padding-bottom:0;">
+                        <div class="card-title">Manage Ads</div>
+                    </div>
+
+                    <form onsubmit="addNewAd(event)">
+                        <div class="form-group">
+                            <label class="form-label">Ad Title</label>
+                            <input type="text" id="new-ad-title" class="form-control" placeholder="e.g. Spin to Win" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Reward Amount (PKR)</label>
+                            <input type="number" id="new-ad-reward" class="form-control" placeholder="e.g. 100" required>
+                        </div>
+                        <button type="submit" class="btn btn-gold">Add Ad</button>
+                    </form>
+                </div>
+
+                <!-- HIDDEN USER LOGS (ADMIN ONLY) -->
+                <div id="admin-user-logs" class="card" style="display:none; border: 2px solid #3b82f6;">
+                    <span class="admin-badge" style="background:#3b82f6;">USER LOGS</span>
+                    <div class="card-header" style="padding-bottom:0;">
+                        <div class="card-title">List of People Who Login</div>
+                    </div>
+                    <div style="overflow-x:auto;">
+                        <table class="user-table">
+                            <thead>
+                                <tr>
+                                    <th>Username</th>
+                                    <th>Login Time</th>
+                                    <th>Status</th>
+                                    <th>IP (Simulated)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="logs-body">
+                                <!-- Logs injected via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </section>
+
+        </main>
+    </div>
+
+    <!-- MOBILE BOTTOM NAV -->
+    <nav class="bottom-nav">
+        <div class="nav-item-mobile active" onclick="switchTab('dashboard', this)">
+            <i class="fa-solid fa-house"></i>
+            <span>Home</span>
+        </div>
+        <div class="nav-item-mobile" onclick="switchTab('deposit', this)">
+            <i class="fa-solid fa-circle-arrow-down"></i>
+            <span>Deposit</span>
+        </div>
+        <div class="nav-item-mobile" onclick="switchTab('withdraw', this)">
+            <i class="fa-solid fa-wallet"></i>
+            <span>Withdraw</span>
+        </div>
+        <div class="nav-item-mobile" onclick="switchTab('settings', this)">
+            <i class="fa-solid fa-gear"></i>
+            <span>Settings</span>
+        </div>
+    </nav>
+
+    <script>
+        /* --- STATE MANAGEMENT (Using LocalStorage to simulate Database) --- */
+        let balance = parseFloat(localStorage.getItem('royal_balance')) || 0;
+        let currentActiveAd = null;
+        let userLogs = JSON.parse(localStorage.getItem('user_logs')) || [];
+        let currentUser = localStorage.getItem('current_user_name') || "Guest";
+        // Default Ads
+        let ads = JSON.parse(localStorage.getItem('royal_ads')) || [
+            { id: 1, title: "Welcome Bonus", reward: 50 },
+            { id: 2, title: "Daily Spin", reward: 100 }
+        ];
+
+        /* --- INITIALIZATION --- */
+        function init() {
+            updateBalanceDisplay();
+            renderAds();
+            // Simulate a "fresh" login if not logged recently
+            if(!localStorage.getItem('last_login_sim')) {
+                simulateUserLogin("Guest User (Auto)");
+                localStorage.setItem('last_login_sim', Date.now());
+            }
+        }
+
+        /* --- BALANCE LOGIC --- */
+        function updateBalanceDisplay() {
+            const display = document.getElementById('display-balance');
+            display.innerText = balance.toLocaleString() + " PKR";
+            localStorage.setItem('royal_balance', balance);
+        }
+
+        function addBalance(amount) {
+            balance += amount;
+            updateBalanceDisplay();
+        }
+
+        function subtractBalance(amount) {
+            balance -= amount;
+            updateBalanceDisplay();
+        }
+
+        /* --- USER LOG LOGIC (ADMIN ONLY) --- */
+        function simulateUserLogin() {
+            const name = prompt("Enter Username to Simulate Login:", "User" + Math.floor(Math.random()*100));
+            if(name) {
+                const newLog = {
+                    username: name,
+                    time: new Date().toLocaleString(),
+                    status: "Active",
+                    ip: "192.168.1." + Math.floor(Math.random() * 255)
+                };
+                userLogs.unshift(newLog); // Add to top
+                localStorage.setItem('user_logs', JSON.stringify(userLogs));
+                alert(`User "${name}" logged in successfully! Added to Admin List.`);
+            }
+        }
+
+        function renderLogs() {
+            const tbody = document.getElementById('logs-body');
+            tbody.innerHTML = '';
+            
+            userLogs.forEach(log => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="font-weight:600;">${log.username}</td>
+                    <td>${log.time}</td>
+                    <td><span class="status-active">${log.status}</span></td>
+                    <td style="font-family:monospace; color:#888;">${log.ip}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        /* --- ADS SYSTEM --- */
+        function renderAds() {
+            const container = document.getElementById('ads-container');
+            container.innerHTML = ''; 
+
+            ads.forEach(ad => {
+                const el = document.createElement('div');
+                el.className = 'ad-banner';
+                el.innerHTML = `
+                    <div class="ad-banner-content">
+                        <h4>${ad.title}</h4>
+                        <span>Reward: +${ad.reward} PKR</span>
+                    </div>
+                    <button class="btn-ad-claim" onclick="openAd(${ad.id})">WATCH</button>
+                `;
+                container.appendChild(el);
+            });
+        }
+
+        function openAd(id) {
+            currentActiveAd = ads.find(a => a.id === id);
+            document.getElementById('active-ad-title').innerText = currentActiveAd.title;
+            document.getElementById('active-ad-desc').innerText = `Watching this ad will add ${currentActiveAd.reward} PKR to your balance!`;
+            document.getElementById('ad-overlay').style.display = 'flex';
+        }
+
+        function closeAd() {
+            document.getElementById('ad-overlay').style.display = 'none';
+        }
+
+        function watchAd() {
+            if(currentActiveAd) {
+                addBalance(currentActiveAd.reward);
+                alert(`SUCCESS! You earned ${currentActiveAd.reward} PKR.`);
+                closeAd();
+            }
+        }
+
+        /* --- DEPOSIT LOGIC (200-5000) --- */
+        function handleDeposit(e) {
+            e.preventDefault();
+            const amount = parseFloat(document.getElementById('d-amount').value);
+            
+            if(amount < 200) { alert('Minimum deposit is 200 PKR'); return; }
+            if(amount > 5000) { alert('Maximum deposit is 5000 PKR'); return; }
+
+            if(confirm(`You are depositing ${amount} PKR. Confirm simulation?`)) {
+                addBalance(amount);
+                alert(`Deposit of ${amount} PKR Approved! Added to balance.`);
+                e.target.reset();
+            }
+        }
+
+        /* --- WITHDRAW LOGIC (500-5000) --- */
+        function handleWithdraw(e) {
+            e.preventDefault();
+            const amount = parseFloat(document.getElementById('w-amount').value);
+
+            if(amount < 500) { alert('Minimum withdrawal is 500 PKR'); return; }
+            if(amount > 5000) { alert('Maximum withdrawal is 5000 PKR'); return; }
+            if(amount > balance) { alert('Insufficient Balance!'); return; }
+
+            if(confirm(`Withdraw ${amount} PKR?`)) {
+                subtractBalance(amount);
+                alert(`Withdrawal of ${amount} PKR Successful!`);
+                e.target.reset();
+            }
+        }
+
+        /* --- ADMIN LOGIN SYSTEM --- */
+        function handleAdminLogin() {
+            const uInput = document.getElementById('admin-user-input');
+            const pInput = document.getElementById('admin-pass-input');
+
+            // Since inputs are hidden (display:none), use default or prompt if values are empty
+            const u = (uInput && uInput.value) ? uInput.value : prompt("Enter Admin Username (admin)");
+            const p = (pInput && pInput.value) ? pInput.value : prompt("Enter Admin Password (1234)");
+
+            // Credentials: admin / 1234
+            if(u === "admin" && p === "1234") {
+                document.getElementById('admin-panel').style.display = 'block';
+                document.getElementById('admin-user-logs').style.display = 'block';
+                renderLogs(); // Show the list of people who logged in
+                
+                // Hide Login Button to prevent clutter
+                document.querySelector('.btn-outline').parentElement.style.display = 'none';
+            } else {
+                alert("Invalid Admin Credentials!\nUsername: admin\nPassword: 1234");
+            }
+        }
+
+        function addNewAd(e) {
+            e.preventDefault();
+            const title = document.getElementById('new-ad-title').value;
+            const reward = parseFloat(document.getElementById('new-ad-reward').value);
+
+            const newAd = { id: Date.now(), title: title, reward: reward };
+            ads.push(newAd);
+            localStorage.setItem('royal_ads', JSON.stringify(ads));
+            renderAds();
+            e.target.reset();
+            alert('Ad Added Successfully!');
+        }
+
+        /* --- FILE UPLOAD HELPER --- */
+        function updateFileName(input) {
+            const display = document.getElementById('file-name-display');
+            if(input.files && input.files[0]) {
+                display.innerText = input.files[0].name;
+                display.style.color = 'var(--primary)';
+            }
+        }
+
+        /* --- TAB SWITCHING --- */
+        function switchTab(tabId, navElement) {
+            const sections = document.querySelectorAll('.tab-section');
+            sections.forEach(sec => sec.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+
+            const allNavs = document.querySelectorAll('.nav-link, .nav-item-mobile');
+            allNavs.forEach(nav => nav.classList.remove('active'));
+
+            if(navElement) {
+                navElement.classList.add('active');
+            } else {
+                document.querySelector('.sidebar .nav-link:first-child').classList.add('active');
+                document.querySelector('.bottom-nav .nav-item-mobile:first-child').classList.add('active');
+            }
+
+            const map = { 'dashboard': 0, 'deposit': 1, 'withdraw': 2, 'tasks': 3, 'settings': 4 };
+            
+            const desktopLinks = document.querySelectorAll('.sidebar .nav-link');
+            if(map[tabId] !== undefined && desktopLinks[map[tabId]]) {
+                desktopLinks.forEach(l => l.classList.remove('active'));
+                desktopLinks[map[tabId]].classList.add('active');
+            }
+
+            const mobileLinks = document.querySelectorAll('.bottom-nav .nav-item-mobile');
+            if(map[tabId] !== undefined && mobileLinks[map[tabId]]) {
+                mobileLinks.forEach(l => l.classList.remove('active'));
+                mobileLinks[map[tabId]].classList.add('active');
+            }
+        }
+
+        // Start App
+        init();
+
+    </script>
+</body>
+</html>
